@@ -28,8 +28,7 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Autentificare eșuată.");
       }
 
-      router.push("/admin");
-      router.refresh();
+      window.location.href = "/admin";
     } catch (err: any) {
       setError(err.message);
     } finally {
