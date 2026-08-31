@@ -12,6 +12,7 @@ import {
   ChevronRight,
   RefreshCw,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import AppointmentDetailModal, { AppointmentData } from "./AppointmentDetailModal";
 
@@ -62,6 +63,26 @@ export default function AppointmentsClient({
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickDelete = async (id: string, name: string) => {
+    if (!confirm(`Sigur doriți să ȘTERGEȚI DEFINITIV programarea pentru ${name}? Această acțiune nu poate fi anulată.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/appointments?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchAppointments();
+      } else {
+        alert(data.error || "Eroare la ștergerea programării.");
+      }
+    } catch (e) {
+      console.error("Delete error:", e);
+      alert("A apărut o eroare la ștergerea programării.");
     }
   };
 
@@ -212,6 +233,18 @@ export default function AppointmentsClient({
                 >
                   <Phone className="w-4 h-4" />
                 </a>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleQuickDelete(appt.id, appt.customerName);
+                  }}
+                  className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-colors"
+                  title="Șterge definitiv programarea"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
 
                 <div className="p-2.5 rounded-xl bg-[#FAFAF8] text-[#967542] border border-[#C5A467]/30 flex items-center gap-1 text-xs font-semibold">
                   <span>Detalii</span>

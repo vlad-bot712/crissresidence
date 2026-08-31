@@ -23,6 +23,7 @@ import {
   Share2,
   MapPin,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 
 export interface AppointmentData {
@@ -73,10 +74,40 @@ export default function AppointmentDetailModal({
   const [newNote, setNewNote] = useState("");
   const [addingNote, setAddingNote] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [reprogramOpen, setReprogramOpen] = useState(false);
   const [newDate, setNewDate] = useState(appointment.appointmentDate);
   const [newTime, setNewTime] = useState(appointment.appointmentTime);
   const [notificationBanner, setNotificationBanner] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        `Sigur doriți să ȘTERGEȚI DEFINITIV programarea pentru ${currentAppt.customerName} (${currentAppt.referenceCode})? Această acțiune nu poate fi anulată.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/appointments?id=${currentAppt.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        onUpdate();
+        onClose();
+      } else {
+        alert(data.error || "Eroare la ștergerea programării.");
+      }
+    } catch (e) {
+      console.error("Delete error:", e);
+      alert("A apărut o eroare la ștergerea programării.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const statuses = [
     "În așteptare",
@@ -334,11 +365,21 @@ export default function AppointmentDetailModal({
                     handleStatusChange("Anulată");
                   }
                 }}
-                className="px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-xs font-medium hover:bg-red-100 flex items-center gap-1.5"
+                className="px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-medium hover:bg-amber-100 flex items-center gap-1.5"
                 title="Anulează și eliberează ora în site"
               >
                 <XCircle className="w-3.5 h-3.5" />
-                <span>Anulează & Eliberează ora</span>
+                <span>Anulează vizita</span>
+              </button>
+
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-2 rounded-xl border border-red-300 bg-red-50 text-red-700 hover:bg-red-600 hover:text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
+                title="Șterge definitiv această programare din baza de date"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{deleting ? "Se șterge..." : "Șterge definitiv"}</span>
               </button>
             </div>
 

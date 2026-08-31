@@ -127,3 +127,30 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: error.message || "Eroare la actualizare." }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const session = await getAdminSession();
+  if (!session) {
+    return NextResponse.json({ error: "Neautorizat." }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID programare lipsă." }, { status: 400 });
+    }
+
+    await prisma.$transaction([
+      prisma.appointmentNote.deleteMany({ where: { appointmentId: id } }),
+      prisma.appointmentStatusHistory.deleteMany({ where: { appointmentId: id } }),
+      prisma.appointment.delete({ where: { id } }),
+    ]);
+
+    return NextResponse.json({ success: true, message: "Programarea a fost ștearsă cu succes." });
+  } catch (error: any) {
+    console.error("Delete error:", error);
+    return NextResponse.json({ error: error.message || "Eroare la ștergerea programării." }, { status: 500 });
+  }
+}

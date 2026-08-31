@@ -117,13 +117,6 @@ export default function Footer() {
             <Link href="/contact" className="hover:text-white/70 transition-colors">
               Termeni & Confidențialitate
             </Link>
-            <Link
-              href="/admin"
-              className="flex items-center gap-1 text-[#D8BE83]/70 hover:text-[#D8BE83] transition-colors"
-            >
-              <Shield className="w-3 h-3" />
-              <span>Panou Admin</span>
-            </Link>
           </div>
         </div>
       </div>
