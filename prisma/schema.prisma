@@ -1,0 +1,125 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+}
+
+model Property {
+  id                String          @id @default(uuid())
+  slug              String          @unique
+  title             String
+  description       String
+  price             Float
+  priceType         String          @default("de_la") // "fix", "de_la", "pe_mp"
+  priceSuffix       String?         @default("€") // "€", "€/m²"
+  status            String          @default("Disponibilă") // "Disponibilă", "În construcție", "Rezervată", "Vândută", "În curând"
+  propertyType      String // "CASĂ LA PROIECT", "CASĂ LA ROȘU", "CASĂ LA CHEIE", "TEREN"
+  bedrooms          Int?            @default(0)
+  bathrooms         Int?            @default(0)
+  rooms             Int?            @default(0)
+  usableArea        Float?          @default(0)
+  builtArea         Float?          @default(0)
+  landArea          Float?          @default(0)
+  floors            String? // e.g. "Parter + Mansardă", "Parter"
+  parking           String? // e.g. "2 locuri"
+  utilities         String? // e.g. "Apă, Canalizare, Curent, Gaz"
+  constructionStage String? // e.g. "Proiect", "La Roșu", "Semifinisat / La Cheie"
+  completionDate    String? // e.g. "Trimestrul IV 2026"
+  address           String          @default("Hereclean 35/A, DC12, Hereclean, Sălaj")
+  latitude          Float           @default(47.2341)
+  longitude         Float           @default(23.0125)
+  featured          Boolean         @default(false)
+  isHidden          Boolean         @default(false)
+  facilities        String          @default("[]") // JSON string of strings
+  order             Int             @default(0)
+  images            PropertyImage[]
+  appointments      Appointment[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  url        String
+  caption    String?
+  isPrimary  Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+model Appointment {
+  id              String                     @id @default(uuid())
+  referenceCode   String                     @unique // e.g. "CR-2026-0001"
+  propertyId      String?
+  property        Property?                  @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  customerName    String
+  phone           String
+  email           String?
+  peopleCount     Int                        @default(1)
+  message         String?
+  appointmentDate String // Format: "YYYY-MM-DD"
+  appointmentTime String // Format: "HH:mm", e.g. "14:00"
+  status          String                     @default("În așteptare")
+  adminNotes      String?
+  notes           AppointmentNote[]
+  statusHistory   AppointmentStatusHistory[]
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+}
+
+model AppointmentNote {
+  id            String      @id @default(uuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  note          String
+  author        String      @default("Admin")
+  createdAt     DateTime    @default(now())
+}
+
+model AppointmentStatusHistory {
+  id            String      @id @default(uuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  oldStatus     String
+  newStatus     String
+  reason        String?
+  changedAt     DateTime    @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AvailableTimeSlot {
+  id        String  @id @default(uuid())
+  dayOfWeek Int // 1 = Monday, 6 = Saturday
+  time      String // "09:00", "10:00", etc.
+  isActive  Boolean @default(true)
+}
